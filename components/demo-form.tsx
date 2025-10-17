@@ -5,21 +5,58 @@ import Script from "next/script"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
+// Extend global window to include plausible
 declare global {
   interface Window {
     plausible?: (eventName: string, options?: Record<string, unknown>) => void
   }
 }
 
+// Debug helper to confirm events fire locally
+function setupPlausibleDebug() {
+  if (typeof window === "undefined") return
+  if (!window.plausible) return
+
+  const original = window.plausible
+
+  window.plausible = function (eventName: string, options?: Record<string, unknown>) {
+    console.log("%c[Plausible Debug]", "color:limegreen;font-weight:bold;", eventName, options || {})
+    return original.call(window, eventName, options)
+  }
+
+  // Optional on-screen badge
+  const badge = document.createElement("div")
+  badge.textContent = "🟢 Plausible Debug ON"
+  Object.assign(badge.style, {
+    position: "fixed",
+    bottom: "10px",
+    right: "10px",
+    background: "rgba(0,0,0,0.6)",
+    color: "white",
+    padding: "6px 10px",
+    borderRadius: "8px",
+    fontSize: "12px",
+    zIndex: "9999",
+    fontFamily: "monospace",
+  })
+  document.body.appendChild(badge)
+}
+
 export function DemoForm() {
   const [showTally, setShowTally] = useState(false)
 
   useEffect(() => {
+    // Setup Plausible debug once
+    setupPlausibleDebug()
+
+    // Listen for Tally form submissions
     function handleTallyMessage(e: MessageEvent) {
       if (e.data?.type === "TALLY_FORM_SUBMIT") {
-        console.log("Tally form submitted!") // debug
-        if (typeof window !== "undefined" && window.plausible) {
+        console.log("🚀 Tally form submitted!") // Debug
+        if (window.plausible) {
           window.plausible("demo_request")
+        } else {
+          console.warn("⚠️ Plausible not loaded yet.")
         }
       }
     }
@@ -40,6 +77,7 @@ export function DemoForm() {
 
   return (
     <section className="relative py-32 border-t border-border">
+      {/* Tally embed script */}
       <Script
         src="https://tally.so/widgets/embed.js"
         strategy="afterInteractive"
