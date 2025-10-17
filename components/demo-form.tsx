@@ -1,19 +1,25 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Script from "next/script"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+
+declare global {
+  interface Window {
+    plausible?: (eventName: string, options?: Record<string, unknown>) => void
+  }
+}
 
 export function DemoForm() {
   const [showTally, setShowTally] = useState(false)
 
-  // Handle Plausible event on Tally form submission
   useEffect(() => {
     function handleTallyMessage(e: MessageEvent) {
       if (e.data?.type === "TALLY_FORM_SUBMIT") {
-        console.log("Tally form submitted!") // optional debug
+        console.log("Tally form submitted!") // debug
         if (typeof window !== "undefined" && window.plausible) {
-          window.plausible("demo_request") // Custom Plausible event
+          window.plausible("demo_request")
         }
       }
     }
@@ -34,10 +40,9 @@ export function DemoForm() {
 
   return (
     <section className="relative py-32 border-t border-border">
-      {/* Load Tally embed script */}
-      <script
-        async
+      <Script
         src="https://tally.so/widgets/embed.js"
+        strategy="afterInteractive"
         onLoad={() => setShowTally(true)}
       />
 
@@ -52,7 +57,6 @@ export function DemoForm() {
 
           <Card className="p-8 bg-card/50 backdrop-blur-sm border-border">
             <div className="space-y-6">
-              {/* Inline Tally Embed */}
               <iframe
                 data-tally-src="https://tally.so/embed/nWvj4Q?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
                 loading="lazy"
@@ -65,14 +69,8 @@ export function DemoForm() {
                 className="rounded-lg"
               />
 
-              {/* Popup Option */}
               <div className="text-center pt-4">
-                <Button
-                  onClick={openTallyForm}
-                  size="lg"
-                  variant="outline"
-                  className="w-full bg-transparent"
-                >
+                <Button onClick={openTallyForm} size="lg" variant="outline" className="w-full bg-transparent">
                   Open in Popup
                 </Button>
               </div>
