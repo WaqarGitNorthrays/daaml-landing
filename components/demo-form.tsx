@@ -46,13 +46,22 @@ export function DemoForm() {
   const [showTally, setShowTally] = useState(false)
 
   useEffect(() => {
-    // Setup Plausible debug once
     setupPlausibleDebug()
 
-    // Listen for Tally form submissions
     function handleTallyMessage(e: MessageEvent) {
-      if (e.data?.type === "TALLY_FORM_SUBMIT") {
-        console.log("🚀 Tally form submitted!") // Debug
+      console.log("📩 Received postMessage:", e.data)
+
+      const d = e.data || {}
+
+      // Covers all known Tally formats
+      const isSubmit =
+        d?.type === "TALLY_FORM_SUBMIT" ||
+        d?.event === "TALLY_FORM_SUBMIT" ||
+        d?.eventName === "FORM_SUBMIT" ||
+        d?.payload?.eventName === "FORM_SUBMIT"
+
+      if (isSubmit) {
+        console.log("🚀 Tally form submitted detected!")
         if (window.plausible) {
           window.plausible("demo_request")
         } else {
@@ -64,6 +73,7 @@ export function DemoForm() {
     window.addEventListener("message", handleTallyMessage)
     return () => window.removeEventListener("message", handleTallyMessage)
   }, [])
+
 
   const openTallyForm = () => {
     if (typeof window !== "undefined" && (window as any).Tally) {
