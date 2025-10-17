@@ -49,19 +49,26 @@ export function DemoForm() {
     setupPlausibleDebug()
 
     function handleTallyMessage(e: MessageEvent) {
-      console.log("📩 Received postMessage:", e.data)
+      // Some messages from Tally are plain strings (e.g. "[iFrameSizer]...")
+      let data: any = e.data
+      if (typeof data === "string") {
+        try {
+          data = JSON.parse(data)
+        } catch {
+          // Ignore non-JSON messages
+          return
+        }
+      }
 
-      const d = e.data || {}
+      console.log("📩 Received postMessage:", data)
 
-      // Covers all known Tally formats
       const isSubmit =
-        d?.type === "TALLY_FORM_SUBMIT" ||
-        d?.event === "TALLY_FORM_SUBMIT" ||
-        d?.eventName === "FORM_SUBMIT" ||
-        d?.payload?.eventName === "FORM_SUBMIT"
+        data?.event === "Tally.FormSubmitted" ||
+        data?.eventName === "FORM_SUBMIT" ||
+        data?.type === "TALLY_FORM_SUBMIT"
 
       if (isSubmit) {
-        console.log("🚀 Tally form submitted detected!")
+        console.log("🚀 Tally form submission detected! Sending event to Plausible…")
         if (window.plausible) {
           window.plausible("demo_request")
         } else {
@@ -73,6 +80,8 @@ export function DemoForm() {
     window.addEventListener("message", handleTallyMessage)
     return () => window.removeEventListener("message", handleTallyMessage)
   }, [])
+
+
 
 
   const openTallyForm = () => {
